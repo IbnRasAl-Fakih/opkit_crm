@@ -3,18 +3,13 @@ import { useLocation, useNavigate } from 'react-router-dom';
 
 import { AppFooter } from '../components/AppFooter';
 import { AuthField } from '../features/auth/components/AuthField';
+import {
+  AuthFormErrors,
+  validateAuthForm,
+} from '../features/auth/utils/validateAuthForm';
 import { AuthShowcase } from '../features/auth/components/AuthShowcase';
 import { useAuth } from '../hooks/useAuth';
 import { AuthMode } from '../types/auth';
-
-type AuthFormErrors = {
-  email?: string;
-  password?: string;
-  confirmPassword?: string;
-  termsAccepted?: string;
-};
-
-const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export function AuthPage() {
   const navigate = useNavigate();
@@ -43,36 +38,13 @@ export function AuthPage() {
   };
 
   const validateForm = () => {
-    const nextErrors: AuthFormErrors = {};
-    const trimmedEmail = email.trim();
-
-    if (!trimmedEmail) {
-      nextErrors.email = 'Введите email';
-    } else if (!emailPattern.test(trimmedEmail)) {
-      nextErrors.email = 'Введите корректный email';
-    }
-
-    if (!password) {
-      nextErrors.password = 'Введите пароль';
-    } else if (password.length < 6) {
-      nextErrors.password = 'Пароль должен содержать минимум 6 символов';
-    }
-
-    if (!isSignIn) {
-      if (!confirmPassword) {
-        nextErrors.confirmPassword = 'Подтвердите пароль';
-      } else if (confirmPassword.length < 6) {
-        nextErrors.confirmPassword =
-          'Подтверждение должно содержать минимум 6 символов';
-      } else if (password !== confirmPassword) {
-        nextErrors.confirmPassword = 'Пароли не совпадают';
-      }
-
-      if (!termsAccepted) {
-        nextErrors.termsAccepted =
-          'Нужно принять условия использования и политику конфиденциальности';
-      }
-    }
+    const nextErrors = validateAuthForm({
+      mode,
+      email,
+      password,
+      confirmPassword,
+      termsAccepted,
+    });
 
     setErrors(nextErrors);
     return Object.keys(nextErrors).length === 0;

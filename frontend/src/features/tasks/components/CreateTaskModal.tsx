@@ -2,6 +2,10 @@ import { FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 
 import { CloseIcon, DropdownOpenIcon } from '../../../icons';
 import { UserOption } from '../../../types/user';
+import {
+  CreateTaskFormErrors,
+  validateCreateTaskForm,
+} from '../utils/validateCreateTaskForm';
 
 type CreateTaskModalProps = {
   open: boolean;
@@ -15,11 +19,6 @@ type CreateTaskModalProps = {
   }) => Promise<void>;
 };
 
-type TaskFormErrors = {
-  title?: string;
-  assigneeId?: string;
-};
-
 export function CreateTaskModal({
   open,
   pending,
@@ -31,7 +30,7 @@ export function CreateTaskModal({
   const [description, setDescription] = useState('');
   const [assigneeId, setAssigneeId] = useState('');
   const [assigneeMenuOpen, setAssigneeMenuOpen] = useState(false);
-  const [errors, setErrors] = useState<TaskFormErrors>({});
+  const [errors, setErrors] = useState<CreateTaskFormErrors>({});
   const assigneeMenuRef = useRef<HTMLDivElement | null>(null);
 
   const selectedAssignee = useMemo(() => {
@@ -68,15 +67,10 @@ export function CreateTaskModal({
   }
 
   const validateForm = () => {
-    const nextErrors: TaskFormErrors = {};
-
-    if (!title.trim()) {
-      nextErrors.title = 'Введите название задачи';
-    }
-
-    if (!selectedAssignee) {
-      nextErrors.assigneeId = 'Выберите исполнителя';
-    }
+    const nextErrors = validateCreateTaskForm({
+      title,
+      assigneeId: selectedAssignee?.id || '',
+    });
 
     setErrors(nextErrors);
     return Object.keys(nextErrors).length === 0;
