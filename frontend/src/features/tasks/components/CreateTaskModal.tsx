@@ -15,6 +15,11 @@ type CreateTaskModalProps = {
   }) => Promise<void>;
 };
 
+type TaskFormErrors = {
+  title?: string;
+  assigneeId?: string;
+};
+
 export function CreateTaskModal({
   open,
   pending,
@@ -26,6 +31,7 @@ export function CreateTaskModal({
   const [description, setDescription] = useState('');
   const [assigneeId, setAssigneeId] = useState('');
   const [assigneeMenuOpen, setAssigneeMenuOpen] = useState(false);
+  const [errors, setErrors] = useState<TaskFormErrors>({});
   const assigneeMenuRef = useRef<HTMLDivElement | null>(null);
 
   const selectedAssignee = useMemo(() => {
@@ -51,20 +57,41 @@ export function CreateTaskModal({
     };
   }, [assigneeMenuOpen]);
 
+  useEffect(() => {
+    if (!open) {
+      setErrors({});
+    }
+  }, [open]);
+
   if (!open) {
     return null;
   }
 
+  const validateForm = () => {
+    const nextErrors: TaskFormErrors = {};
+
+    if (!title.trim()) {
+      nextErrors.title = 'Введите название задачи';
+    }
+
+    if (!selectedAssignee) {
+      nextErrors.assigneeId = 'Выберите исполнителя';
+    }
+
+    setErrors(nextErrors);
+    return Object.keys(nextErrors).length === 0;
+  };
+
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    if (!selectedAssignee) {
+    if (!validateForm() || !selectedAssignee) {
       return;
     }
 
     await onSubmit({
-      title,
-      description,
+      title: title.trim(),
+      description: description.trim(),
       assigneeId: selectedAssignee.id,
     });
 
@@ -72,6 +99,7 @@ export function CreateTaskModal({
     setDescription('');
     setAssigneeId(users[0]?.id || '');
     setAssigneeMenuOpen(false);
+    setErrors({});
   };
 
   return (
@@ -93,17 +121,25 @@ export function CreateTaskModal({
           </button>
         </div>
 
-        <form className="mt-8 flex flex-col gap-5" onSubmit={handleSubmit}>
+        <form className="mt-8 flex flex-col gap-5" onSubmit={handleSubmit} noValidate>
           <label className="flex flex-col gap-2">
             <span className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-slate-500">
               Название задачи
             </span>
             <input
-              className="h-14 rounded-2xl border border-slate-200 bg-slate-50 px-4 text-slate-800 outline-none transition focus:border-blue-300 focus:bg-white focus:ring-4 focus:ring-blue-100"
+              className={`h-14 rounded-2xl border px-4 text-slate-800 outline-none transition focus:bg-white focus:ring-4 ${
+                errors.title
+                  ? 'border-rose-300 bg-rose-50/40 focus:border-rose-300 focus:ring-rose-100'
+                  : 'border-slate-200 bg-slate-50 focus:border-blue-300 focus:ring-blue-100'
+              }`}
               placeholder="Например: Разработка макета"
               value={title}
-              onChange={(event) => setTitle(event.target.value)}
+              onChange={(event) => {
+                setTitle(event.target.value);
+                setErrors((current) => ({ ...current, title: undefined }));
+              }}
             />
+            {errors.title && <span className="text-sm text-rose-600">{errors.title}</span>}
           </label>
 
           <label className="flex flex-col gap-2">
@@ -118,7 +154,7 @@ export function CreateTaskModal({
             />
           </label>
 
-          <div className="flex flex-col gap-2" ref={assigneeMenuRef}>
+          <div className="relative flex flex-col gap-2" ref={assigneeMenuRef}>
             <span className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-slate-500">
               Исполнитель
             </span>
@@ -127,9 +163,11 @@ export function CreateTaskModal({
               type="button"
               onClick={() => users.length > 0 && setAssigneeMenuOpen((current) => !current)}
               className={`flex h-14 items-center justify-between rounded-2xl border px-4 text-left text-slate-800 outline-none transition ${
-                assigneeMenuOpen
-                  ? 'border-blue-300 bg-white ring-4 ring-blue-100'
-                  : 'border-slate-200 bg-slate-50 hover:bg-white'
+                errors.assigneeId
+                  ? 'border-rose-300 bg-rose-50/40 ring-4 ring-rose-100'
+                  : assigneeMenuOpen
+                    ? 'border-blue-300 bg-white ring-4 ring-blue-100'
+                    : 'border-slate-200 bg-slate-50 hover:bg-white'
               } ${users.length === 0 ? 'cursor-not-allowed text-slate-400' : ''}`}
             >
               <span className="truncate">
@@ -142,9 +180,13 @@ export function CreateTaskModal({
               </span>
             </button>
 
+            {errors.assigneeId && (
+              <span className="text-sm text-rose-600">{errors.assigneeId}</span>
+            )}
+
             {assigneeMenuOpen && users.length > 0 && (
-              <div className="relative z-20 mt-2 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_18px_40px_rgba(15,23,42,0.12)]">
-                <div className="max-h-56 overflow-y-auto py-2">
+              <div className="absolute left-0 right-0 top-[calc(100%+8px)] z-30 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_18px_40px_rgba(15,23,42,0.12)]">
+                <div className="max-h-[172px] overflow-y-auto py-2">
                   {users.map((user) => {
                     const isActive = selectedAssignee?.id === user.id;
 
@@ -155,6 +197,10 @@ export function CreateTaskModal({
                         onClick={() => {
                           setAssigneeId(user.id);
                           setAssigneeMenuOpen(false);
+                          setErrors((current) => ({
+                            ...current,
+                            assigneeId: undefined,
+                          }));
                         }}
                         className={`flex w-full items-center justify-between px-4 py-3 text-left text-sm transition ${
                           isActive

@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useState } from 'react';
+import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 import { AppFooter } from '../components/AppFooter';
@@ -6,6 +6,15 @@ import { AuthField } from '../features/auth/components/AuthField';
 import { AuthShowcase } from '../features/auth/components/AuthShowcase';
 import { useAuth } from '../hooks/useAuth';
 import { AuthMode } from '../types/auth';
+
+type AuthFormErrors = {
+  email?: string;
+  password?: string;
+  confirmPassword?: string;
+  termsAccepted?: string;
+};
+
+const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export function AuthPage() {
   const navigate = useNavigate();
@@ -20,17 +29,61 @@ export function AuthPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [errors, setErrors] = useState<AuthFormErrors>({});
 
   useEffect(() => {
     clearError();
+    setErrors({});
+    setTermsAccepted(false);
   }, [mode, clearError]);
 
   const changeMode = (nextMode: AuthMode) => {
     navigate(nextMode === 'signup' ? '/auth/sign-up' : '/auth/sign-in');
   };
 
+  const validateForm = () => {
+    const nextErrors: AuthFormErrors = {};
+    const trimmedEmail = email.trim();
+
+    if (!trimmedEmail) {
+      nextErrors.email = 'Введите email';
+    } else if (!emailPattern.test(trimmedEmail)) {
+      nextErrors.email = 'Введите корректный email';
+    }
+
+    if (!password) {
+      nextErrors.password = 'Введите пароль';
+    } else if (password.length < 6) {
+      nextErrors.password = 'Пароль должен содержать минимум 6 символов';
+    }
+
+    if (!isSignIn) {
+      if (!confirmPassword) {
+        nextErrors.confirmPassword = 'Подтвердите пароль';
+      } else if (confirmPassword.length < 6) {
+        nextErrors.confirmPassword =
+          'Подтверждение должно содержать минимум 6 символов';
+      } else if (password !== confirmPassword) {
+        nextErrors.confirmPassword = 'Пароли не совпадают';
+      }
+
+      if (!termsAccepted) {
+        nextErrors.termsAccepted =
+          'Нужно принять условия использования и политику конфиденциальности';
+      }
+    }
+
+    setErrors(nextErrors);
+    return Object.keys(nextErrors).length === 0;
+  };
+
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+
+    if (!validateForm()) {
+      return;
+    }
 
     try {
       await submitAuth({
@@ -46,6 +99,19 @@ export function AuthPage() {
       return;
     }
   };
+
+  const title = useMemo(
+    () => (isSignIn ? 'С возвращением' : 'Создать аккаунт'),
+    [isSignIn],
+  );
+
+  const description = useMemo(
+    () =>
+      isSignIn
+        ? 'Введите данные для входа в вашу учетную запись'
+        : 'Зарегистрируйтесь, чтобы получить доступ к платформе.',
+    [isSignIn],
+  );
 
   return (
     <div className="min-h-screen px-4 py-5 sm:px-6 lg:px-8">
@@ -63,22 +129,24 @@ export function AuthPage() {
                     className="h-14 w-auto object-contain"
                   />
                   <h2 className="mt-8 text-4xl font-extrabold tracking-[-0.05em] text-slate-800">
-                    {isSignIn ? 'С возвращением' : 'Создать аккаунт'}
+                    {title}
                   </h2>
                   <p className="mt-3 max-w-md text-sm leading-6 text-slate-500">
-                    {isSignIn
-                      ? 'Введите данные для входа в вашу учетную запись'
-                      : 'Зарегистрируйтесь, чтобы получить доступ к платформе.'}
+                    {description}
                   </p>
                 </div>
 
-                <form className="mt-8 flex flex-col gap-4" onSubmit={handleSubmit}>
+                <form className="mt-8 flex flex-col gap-4" onSubmit={handleSubmit} noValidate>
                   <AuthField
                     label="Электронная почта"
                     type="email"
                     placeholder="name@company.com"
                     value={email}
-                    onChange={setEmail}
+                    onChange={(value) => {
+                      setEmail(value);
+                      setErrors((current) => ({ ...current, email: undefined }));
+                    }}
+                    error={errors.email}
                   />
 
                   {isSignIn ? (
@@ -87,7 +155,11 @@ export function AuthPage() {
                       type="password"
                       placeholder="Password"
                       value={password}
-                      onChange={setPassword}
+                      onChange={(value) => {
+                        setPassword(value);
+                        setErrors((current) => ({ ...current, password: undefined }));
+                      }}
+                      error={errors.password}
                     />
                   ) : (
                     <div className="grid gap-4 sm:grid-cols-2">
@@ -96,34 +168,63 @@ export function AuthPage() {
                         type="password"
                         placeholder="Password"
                         value={password}
-                        onChange={setPassword}
+                        onChange={(value) => {
+                          setPassword(value);
+                          setErrors((current) => ({
+                            ...current,
+                            password: undefined,
+                            confirmPassword: undefined,
+                          }));
+                        }}
+                        error={errors.password}
                       />
                       <AuthField
                         label="Подтверждение"
                         type="password"
                         placeholder="Password confirmation"
                         value={confirmPassword}
-                        onChange={setConfirmPassword}
+                        onChange={(value) => {
+                          setConfirmPassword(value);
+                          setErrors((current) => ({
+                            ...current,
+                            confirmPassword: undefined,
+                          }));
+                        }}
+                        error={errors.confirmPassword}
                       />
                     </div>
                   )}
 
                   {!isSignIn && (
-                    <>
-                    <label className="mt-1 flex items-start gap-3 text-sm leading-6 text-slate-500">
-                      <input className="mt-1 h-4 w-4 rounded border-slate-300" type="checkbox" />
-                      <span>
-                        Я принимаю{' '}
-                        <span className="font-semibold text-blue-700">
-                          Условия использования
-                        </span>{' '}
-                        и{' '}
-                        <span className="font-semibold text-blue-700">
-                          Политику конфиденциальности
+                    <div className="mt-1">
+                      <label className="flex items-start gap-3 text-sm leading-6 text-slate-500">
+                        <input
+                          className="mt-1 h-4 w-4 rounded border-slate-300"
+                          type="checkbox"
+                          checked={termsAccepted}
+                          onChange={(event) => {
+                            setTermsAccepted(event.target.checked);
+                            setErrors((current) => ({
+                              ...current,
+                              termsAccepted: undefined,
+                            }));
+                          }}
+                        />
+                        <span>
+                          Я принимаю{' '}
+                          <span className="font-semibold text-blue-700">
+                            Условия использования
+                          </span>{' '}
+                          и{' '}
+                          <span className="font-semibold text-blue-700">
+                            Политику конфиденциальности
+                          </span>
                         </span>
-                      </span>
-                    </label>
-                    </>
+                      </label>
+                      {errors.termsAccepted && (
+                        <p className="mt-2 text-sm text-rose-600">{errors.termsAccepted}</p>
+                      )}
+                    </div>
                   )}
 
                   <button
