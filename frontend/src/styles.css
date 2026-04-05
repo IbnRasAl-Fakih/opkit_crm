@@ -1,0 +1,24 @@
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Manrope", "Segoe UI", sans-serif;
+  --color-ink-900: #0d2345;
+  --color-ink-800: #122d5b;
+  --color-ink-700: #214173;
+  --color-ink-200: #d7e2f2;
+  --color-sky-100: #eef4fb;
+  --color-sky-50: #f7faff;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  background:
+    radial-gradient(circle at top left, rgba(63, 110, 191, 0.18), transparent 28%),
+    linear-gradient(180deg, #f8fbff 0%, #eef3f8 100%);
+}

@@ -1,0 +1,12 @@
+export { BurgerMenuIcon } from './burger-menu';
+export { BurgerMenuCloseIcon } from './burger-menu-close';
+export { CalendarIcon } from './calendar';
+export { CloseIcon } from './close';
+export { DropdownOpenIcon } from './dropdown-open';
+export { LoupeIcon } from './loupe';
+export { LogoutIcon } from './logout';
+export { ProjectsIcon } from './projetcs';
+export { ReportIcon } from './report';
+export { SettingsIcon } from './settings';
+export { TasksIcon } from './tasks';
+export { TeamIcon } from './team';

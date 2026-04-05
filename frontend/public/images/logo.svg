@@ -1,0 +1,9 @@
+<svg width="228" height="52" viewBox="0 0 228 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="52" height="52" rx="14" fill="#0E5B73"/>
+  <path d="M10 0H52V52H22C15.373 52 10 46.627 10 40V0Z" fill="#143A52" fill-opacity="0.42"/>
+  <path d="M18 34V18H26.8C31.1229 18 34 20.6217 34 24.3768C34 28.1319 31.1229 30.7536 26.8 30.7536H22.48V34H18ZM22.48 27.2355H26.32C28.3657 27.2355 29.52 26.1534 29.52 24.3768C29.52 22.5641 28.3657 21.482 26.32 21.482H22.48V27.2355Z" fill="#F7FBFF"/>
+  <path d="M39.2812 34L34.1094 26.7031L38.2109 23.3281L44.5938 34H39.2812Z" fill="#F7FBFF"/>
+  <path d="M34.9766 25.9844L39.9922 18H45.0547L38.9844 25.9844H34.9766Z" fill="#D3F0FF"/>
+  <text x="68" y="24" fill="#102A52" font-family="Manrope, Segoe UI, Arial, sans-serif" font-size="22" font-weight="800" letter-spacing="-0.04em">Opkit</text>
+  <text x="68" y="42" fill="#8AA0C2" font-family="Manrope, Segoe UI, Arial, sans-serif" font-size="11" font-weight="700" letter-spacing="0.26em">CRM PLATFORM</text>
+</svg>
